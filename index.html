@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Lista de precios - Congelados</title>
+<style>
+  :root {
+    --bg: #f3f6fa; --card: #ffffff; --texto: #14202e; --suave: #5d6b7c;
+    --linea: #e2e8f0; --acento: #0b6bcb; --acento-texto: #ffffff; --chip: #e4ecf6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1722; --card: #17212e; --texto: #e8eef6; --suave: #9aa8b9;
+      --linea: #26323f; --acento: #4da3ff; --acento-texto: #07121f; --chip: #1f2c3b;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--texto);
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .contenedor { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 22px 0 10px; }
+  h1 { font-size: 1.45rem; margin: 0; line-height: 1.2; }
+  .fecha { margin: 6px 0 0; color: var(--suave); font-size: .9rem; }
+
+  .barra {
+    position: sticky; top: 0; z-index: 5; background: var(--bg);
+    padding: 8px 0 10px; border-bottom: 1px solid var(--linea);
+  }
+  #buscar {
+    width: 100%; padding: 12px 14px; font-size: 16px; font-family: inherit;
+    border: 1px solid var(--linea); border-radius: 12px;
+    background: var(--card); color: var(--texto);
+  }
+  #buscar:focus { outline: 2px solid var(--acento); outline-offset: 1px; }
+  .chips {
+    display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips button {
+    flex: none; border: 0; cursor: pointer; font: inherit; font-size: .92rem;
+    padding: 8px 14px; border-radius: 999px; background: var(--chip); color: var(--texto);
+  }
+  .chips button.activo { background: var(--acento); color: var(--acento-texto); font-weight: 600; }
+
+  h2 {
+    font-size: .78rem; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--suave); margin: 22px 4px 8px;
+  }
+  ul {
+    list-style: none; margin: 0; padding: 0; background: var(--card);
+    border: 1px solid var(--linea); border-radius: 14px; overflow: hidden;
+  }
+  li {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+    padding: 13px 16px; border-top: 1px solid var(--linea);
+  }
+  li:first-child { border-top: 0; }
+  .nombre { flex: 1; min-width: 0; }
+  .precio { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  .vacio { text-align: center; color: var(--suave); padding: 48px 0; }
+  footer { padding: 26px 0 44px; color: var(--suave); font-size: .85rem; text-align: center; }
+</style>
+</head>
+<body>
+<div class="contenedor">
+  <header>
+    <h1 id="titulo"></h1>
+    <p class="fecha" id="fecha"></p>
+  </header>
+
+  <div class="barra">
+    <input id="buscar" type="search" placeholder="Buscar producto…" autocomplete="off"
+           aria-label="Buscar producto">
+    <div class="chips" id="marcas" role="group" aria-label="Filtrar por marca"></div>
+  </div>
+
+  <main id="lista" aria-live="polite"></main>
+  <p class="vacio" id="vacio" hidden>No encontramos productos con ese filtro.</p>
+  <footer id="nota"></footer>
+</div>
+
+<script>
+const DATOS = {"titulo": "Lista de precios - Congelados", "nota": "Precios sujetos a modificación sin previo aviso.", "actualizado": "05/11/2026", "marcas": ["Bem Brasil", "Butler", "Cedal", "Grangy's", "McCain", "Sadia"], "productos": [{"marca": "Bem Brasil", "nombre": "Aros de Cebolla x 1 kg", "precio": 7100}, {"marca": "Bem Brasil", "nombre": "Bastón x 2.5 kg", "precio": 11000}, {"marca": "Bem Brasil", "nombre": "Caritas x 1 kg", "precio": 4150}, {"marca": "Bem Brasil", "nombre": "Crinkles x 2 kg", "precio": 8900}, {"marca": "Bem Brasil", "nombre": "Noisette x 1 kg", "precio": 4150}, {"marca": "Butler", "nombre": "Papa Baston x 2,5 kg", "precio": 11900}, {"marca": "Cedal", "nombre": "Milanesa de Pollo x 10 kg", "precio": 59900}, {"marca": "Grangy's", "nombre": "101 Medallon Merluza x 5 kg", "precio": 26500}, {"marca": "Grangy's", "nombre": "106 Baston Merluza x 5 kg", "precio": 26500}, {"marca": "Grangy's", "nombre": "223 Bocadito Mozzarella x 5 kg", "precio": 50250}, {"marca": "Grangy's", "nombre": "224 Bocadito Calabaza y Q x 5 kg", "precio": 31100}, {"marca": "Grangy's", "nombre": "225 Bocadito con JyQ x 5 kg", "precio": 47100}, {"marca": "Grangy's", "nombre": "228 Bocadito de Espinaca x 5 kg", "precio": 28200}, {"marca": "Grangy's", "nombre": "229 Bocadito Papa y Queso x 5 kg", "precio": 30700}, {"marca": "Grangy's", "nombre": "230 Bocadito Capresse x 5 kg", "precio": 52500}, {"marca": "Grangy's", "nombre": "400 Milanesa de Soja x 5 kg", "precio": 31100}, {"marca": "Grangy's", "nombre": "424 Soja con Calabaza x 5 kg", "precio": 27500}, {"marca": "Grangy's", "nombre": "428 Soja con Espinaca x 5 kg", "precio": 27500}, {"marca": "Grangy's", "nombre": "751 Burgas 68 x 83.5 gr", "precio": 75300}, {"marca": "Grangy's", "nombre": "901 Medallon de Pollo x 5 kg", "precio": 31600}, {"marca": "Grangy's", "nombre": "925 Patita con JyQ x 5 kg", "precio": 37700}, {"marca": "Grangy's", "nombre": "927 Medallon con JyQ x 5 kg", "precio": 36600}, {"marca": "Grangy's", "nombre": "928 Medallon Espina con JyQ x 5 kg", "precio": 36600}, {"marca": "Grangy's", "nombre": "931 Patita de Pollo x 5 kg", "precio": 31600}, {"marca": "Grangy's", "nombre": "941 Dino x 5 kg", "precio": 32800}, {"marca": "Grangy's", "nombre": "61330 Tiritas x 6 kg", "precio": 47950}, {"marca": "Grangy's", "nombre": "61333 Nuggets Tempura x 6 kg", "precio": 54000}, {"marca": "Grangy's", "nombre": "61334 Nuggets Gigantes x 6 kg", "precio": 58500}, {"marca": "Grangy's", "nombre": "61336 Nuggets x 6 kg", "precio": 50600}, {"marca": "Grangy's", "nombre": "61340 Supremas Crispy x 6 kg", "precio": 65550}, {"marca": "Grangy's", "nombre": "61800 Cañoncitos Mozza x 6 kg", "precio": 62200}, {"marca": "Grangy's", "nombre": "61941 Dino x 6 kg", "precio": 38300}, {"marca": "Grangy's", "nombre": "Aros de Cebolla x 1 kg", "precio": 10200}, {"marca": "McCain", "nombre": "Caritas x 1.5 kg", "precio": 15200}, {"marca": "McCain", "nombre": "Noisette x 2.5 kg", "precio": 25500}, {"marca": "McCain", "nombre": "Papa Baston x 2,5 kg", "precio": 16200}, {"marca": "Sadia", "nombre": "Chicken Fingers x 3 kg", "precio": 37500}, {"marca": "Sadia", "nombre": "Nuggets de Pollo x 3 kg", "precio": 30000}, {"marca": "Sadia", "nombre": "Supreme x 3 kg", "precio": 35000}]};
+
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  if (!DATOS) {
+    $('lista').textContent = 'Sin datos. Ejecutá actualizar_precios.py para generar esta página.';
+    return;
+  }
+
+  document.title = DATOS.titulo;
+  $('titulo').textContent = DATOS.titulo;
+  $('fecha').textContent = 'Precios actualizados al ' + DATOS.actualizado;
+  $('nota').textContent = DATOS.nota || '';
+
+  const formato = new Intl.NumberFormat('es-AR', {
+    style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 2
+  });
+  const limpio = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+                         .replace(/['’´`]/g, '').toLowerCase();
+
+  const items = DATOS.productos.map((p) => ({
+    marca: p.marca, nombre: p.nombre, precio: p.precio,
+    clave: limpio(p.marca + ' ' + p.nombre)
+  }));
+
+  let marcaActiva = null;   // null = todas
+  let texto = '';
+
+  const chips = [];
+  function crearChip(etiqueta, valor) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = etiqueta;
+    b.addEventListener('click', () => {
+      marcaActiva = valor;
+      window.scrollTo({ top: 0 });
+      pintar();
+    });
+    $('marcas').appendChild(b);
+    chips.push({ btn: b, valor: valor });
+  }
+  crearChip('Todas', null);
+  DATOS.marcas.forEach((m) => crearChip(m, m));
+
+  function pintar() {
+    chips.forEach((c) => {
+      const activo = c.valor === marcaActiva;
+      c.btn.classList.toggle('activo', activo);
+      c.btn.setAttribute('aria-pressed', activo ? 'true' : 'false');
+    });
+
+    const palabras = limpio(texto).split(/\s+/).filter(Boolean);
+    const lista = $('lista');
+    lista.textContent = '';
+
+    let total = 0, grupo = null, ul = null;
+    items.forEach((p) => {
+      if (marcaActiva !== null && p.marca !== marcaActiva) return;
+      if (!palabras.every((w) => p.clave.indexOf(w) !== -1)) return;
+
+      if (p.marca !== grupo) {
+        grupo = p.marca;
+        const h = document.createElement('h2');
+        h.textContent = grupo;
+        ul = document.createElement('ul');
+        lista.appendChild(h);
+        lista.appendChild(ul);
+      }
+      const li = document.createElement('li');
+      const n = document.createElement('span');
+      n.className = 'nombre';
+      n.textContent = p.nombre;
+      const pr = document.createElement('span');
+      pr.className = 'precio';
+      pr.textContent = formato.format(p.precio);
+      li.appendChild(n);
+      li.appendChild(pr);
+      ul.appendChild(li);
+      total++;
+    });
+    $('vacio').hidden = total > 0;
+  }
+
+  $('buscar').addEventListener('input', (e) => { texto = e.target.value; pintar(); });
+  pintar();
+})();
+</script>
+</body>
+</html>
